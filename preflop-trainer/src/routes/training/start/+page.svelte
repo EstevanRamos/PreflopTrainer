@@ -1,112 +1,133 @@
 <script>
-    // Dummy data for the drill
-    let drill = {
-        positions: ['UTG', 'MP', 'CO', 'BTN', 'SB', 'BB'],
-        stackSizes: [50, 100, 150, 200, 250, 300],
-        hands: 100,
-        currentHand: 1,
-        folded: false,
-        pot: 180,
-        ranges: {
-            UTG: ['AA', 'KK', 'QQ', 'AK'],
-            MP: ['JJ', 'TT', 'AQ', 'AJ'],
-            CO: ['99', '88', 'KQ', 'KJ'],
-            BTN: ['77', '66', 'QJ', 'QT'],
-            SB: ['55', '44', 'JT', 'T9'],
-            BB: ['33', '22', '98', '87']
-        }
-    };
 
-    let selectedPosition = '';
-    let selectedStackSize = 0;
-    let preflopHand = '';
-    let isHandInRange = false;
+    // Dummy player positions
+    let playerPositions = $state([
+        { name: "Tom", stack: 100 },
+        { name: "Joe", stack: 90 },
+        { name: "Anna", stack: 110 },
+        { name: "Mark", stack: 95 },
+        { name: "Lisa", stack: 85 },
+        { name: "You", stack: 120, isHero: true }
+    ]);
 
-    // Function to start a new hand
-    function startNewHand() {
-        // Randomly select a position and stack size
-        selectedPosition = drill.positions[Math.floor(Math.random() * drill.positions.length)];
-        selectedStackSize = drill.stackSizes[Math.floor(Math.random() * drill.stackSizes.length)];
+    // Training scenario data (Dummy for now)
+    let trainingScenario = $state({
+        numberOfHands: 10,
+        positions: ["CO", "BTN"],
+        stackSizes: [10, 20, 30],
+        ranges: ["AA, KK, QQ, AQs"]
+    });
 
-        // Randomly generate a pre-flop starting hand
-        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
-        const suits = ['s', 'h', 'd', 'c'];
-        const card1 = ranks[Math.floor(Math.random() * ranks.length)] + suits[Math.floor(Math.random() * suits.length)];
-        const card2 = ranks[Math.floor(Math.random() * ranks.length)] + suits[Math.floor(Math.random() * suits.length)];
-        preflopHand = `${card1} ${card2}`;
+    let currentHandIndex = $state(0);
+    let currentHand = $state({ hand: "", position: "", stackSize: "" });
+    let playerActions = $state([]);
 
-        // Check if the hand is in the specified range
-        isHandInRange = drill.ranges[selectedPosition].includes(preflopHand.split(' ')[0].slice(0, -1));
+    function generateRandomHand() {
+        const hands = ["AKs", "AQo", "77", "JTs", "T9s", "22", "KQo"];
+        return hands[Math.floor(Math.random() * hands.length)];
     }
 
-    function fold() {
-        drill.folded = true;
+    function generateNewHand() {
+        if (currentHandIndex >= trainingScenario.numberOfHands) return;
+        
+        currentHand.hand = generateRandomHand();
+        currentHand.position = trainingScenario.positions[Math.floor(Math.random() * trainingScenario.positions.length)];
+        currentHand.stackSize = trainingScenario.stackSizes[Math.floor(Math.random() * trainingScenario.stackSizes.length)];
     }
 
-    function nextHand() {
-        if (drill.currentHand < drill.hands) {
-            drill.currentHand += 1;
-            drill.folded = false;
-            startNewHand();
-        }
+    function recordAction(action) {
+        playerActions.push({ hand: currentHand.hand, action });
+        currentHandIndex += 1;
+        generateNewHand();
     }
 
-    // Initialize the first hand
-    startNewHand();
+    // Generate the first hand
+    generateNewHand();
 </script>
 
 <style>
-    .container {
+    .table-container {
+        position: relative;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #333, #111);
+        margin: auto;
+    }
+
+    .player {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        text-align: center;
+        color: white;
+        transform: translate(-50%, -50%) rotate(calc(var(--i) * 60deg))
+                   translateY(-180px) rotate(calc(var(--i) * -60deg));
+    }
+
+    .player-hand {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
         display: flex;
-        flex-direction: column;
+        gap: 10px;
+    }
+
+    .card {
+        width: 50px;
+        height: 70px;
+        background: white;
+        border-radius: 5px;
+        display: flex;
         align-items: center;
         justify-content: center;
-        height: 100vh;
-        background-color: #2c3e50;
-        color: white;
-        font-family: Arial, sans-serif;
+        font-size: 20px;
     }
-    .info {
-        margin-bottom: 20px;
-        text-align: center;
+
+    .action-buttons {
+        position: absolute;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 15px;
     }
-    .button {
+
+    button {
         padding: 10px 20px;
-        margin: 5px;
         border: none;
         border-radius: 5px;
+        font-size: 16px;
         cursor: pointer;
-        background-color: #3498db;
-        color: white;
     }
-    .button:disabled {
-        background-color: #7f8c8d;
-        cursor: not-allowed;
-    }
-    .hand-status {
-        margin-top: 20px;
-        font-size: 1.2em;
-    }
+
+    .fold { background: red; color: white; }
+    .call { background: blue; color: white; }
+    .raise { background: green; color: white; }
 </style>
 
-<div class="container">
-    <div class="info">
-        <h1>Moon Poker</h1>
-        <p>Hand: {drill.currentHand} / {drill.hands}</p>
-        <p>Position: {selectedPosition}</p>
-        <p>Stack Size: {selectedStackSize}</p>
-        <p>Pre-flop Hand: {preflopHand}</p>
-        <p>Pot: {drill.pot}</p>
-    </div>
-    <div>
-        <button class="button" on:click={fold} disabled={drill.folded}>Fold</button>
-        <button class="button" on:click={nextHand} disabled={!drill.folded}>Next Hand</button>
-    </div>
-    <div class="hand-status">
-        {#if isHandInRange}
-            <p>Your hand is in the range for {selectedPosition}.</p>
-        {:else}
-            <p>Your hand is NOT in the range for {selectedPosition}.</p>
+<div class="table-container">
+    <!-- Player Positions (Circular Layout) -->
+    {#each playerPositions as player, index}
+        <div class="player" style="--i: {index}">
+            <div class="avatar">{player.name}</div>
+            <div class="player-stack">{player.stack} BB</div>
+        </div>
+    {/each}
+
+    <!-- Player's Cards (Bottom Center) -->
+    <div class="player-hand">
+        {#if currentHand.hand}
+            <div class="card">{currentHand.hand.slice(0, -1)}</div>
+            <div class="card">{currentHand.hand.slice(-1)}</div>
         {/if}
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button class="fold" on:click={() => recordAction("Fold")}>Fold</button>
+        <button class="call" on:click={() => recordAction("Call")}>Call</button>
+        <button class="raise" on:click={() => recordAction("Raise")}>Raise</button>
     </div>
 </div>
