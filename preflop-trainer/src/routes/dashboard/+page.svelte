@@ -1,0 +1,16 @@
+<script>
+    export let data;
+    let user = data.user;
+    console.log(user);
+</script>
+
+{#if user}
+    <h1>Welcome, {user.username || user.email}!</h1>
+    <p>Email: {user.email}</p>
+    <form method="POST" action="/logout">
+        <button type="submit">Logout</button>
+    </form>
+{:else}
+    <p>You are not logged in.</p>
+    <a href="/login">Login</a>
+{/if}
