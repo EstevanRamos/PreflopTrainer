@@ -3,25 +3,46 @@
     import { goto } from '$app/navigation';
 
     let errorMessage = '';
-
 </script>
 
-<section class="login-container">
-    <h1>Login</h1>
+<div class="hero min-h-screen bg-base-200">
+    <div class="hero-content flex-col">
+        <div class="card w-full max-w-sm shadow-2xl bg-base-100">
+            <div class="card-body">
+                <h1 class="text-3xl font-bold text-center">Login</h1>
 
-    {#if errorMessage}
-        <p class="error">{errorMessage}</p>
-    {/if}
+                {#if errorMessage}
+                    <div class="alert alert-error">
+                        <span>{errorMessage}</span>
+                    </div>
+                {/if}
 
-    <form method="POST" action="?/login" use:enhance>
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required />
+                <form method="POST" action="?/login" use:enhance>
+                    <div class="form-control mb-4">
+                        <label class="label" for="email">
+                            <span class="label-text">Email</span>
+                        </label>
+                        <input type="email" id="email" name="email" required class="input input-bordered" />
+                    </div>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required />
+                    <div class="form-control mb-4">
+                        <label class="label" for="password">
+                            <span class="label-text">Password</span>
+                        </label>
+                        <input type="password" id="password" name="password" required class="input input-bordered" />
+                    </div>
 
-        <button type="submit">Login</button>
-    </form>
+                    <div class="form-control mt-6">
+                        <button class="btn btn-primary">Login</button>
+                    </div>
+                </form>
 
-    <p>Don't have an account? <a href="/register">Sign up</a></p>
-</section>
+                <div class="text-center mt-4">
+                    <p>Don't have an account? 
+                        <a href="/register" class="link link-primary">Sign up</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

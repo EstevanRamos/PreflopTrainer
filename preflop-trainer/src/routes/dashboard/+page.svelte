@@ -9,7 +9,7 @@
     <h1>Welcome, {user.name}!</h1>
     <p>Email: {user.email}</p>
     <form method="POST" action="/logout" >
-        <button type="submit">Logout</button>
+        <button class="btn btn-primary" type="submit">Logout</button>
     </form>
 
 {:else}
