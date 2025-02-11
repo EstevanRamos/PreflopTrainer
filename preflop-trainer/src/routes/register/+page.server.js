@@ -1,19 +1,24 @@
 export const actions = {
-    signup: async ({ request, locals }) => {
+    default: async ({ request, locals }) => {
         const formData = await request.formData();
-        const email = formData.get('email');
-        const password = formData.get('password');
-        const passwordConfirm = formData.get('passwordConfirm');
+        const data = Object.fromEntries(formData.entries());
 
         try {
-            await locals.pb.collection('users').create({
-                email,
-                password,
-                passwordConfirm
-            });
-            return { success: true };
+            const user = await locals.pb.collection('users').create(data);
+
+            const authdata = await locals.pb.collection('users').authWithPassword(data.email, data.password);
+
+            console.log(authdata);
+
+            locals.pb.authstore.clear()
         } catch (error) {
-            return { error: error.message };
+            // Convert the error object to a serializable format
+            return { 
+                error: true, 
+                message: JSON.stringify(error, Object.getOwnPropertyNames(error))
+            };
         }
+
+        throw redirect(303, '/login');
     }
 };

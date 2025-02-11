@@ -1,3 +1,5 @@
+import { redirect } from '@sveltejs/kit';
+
 export const actions = {
     login: async ({ request, locals }) => {
         const formData = await request.formData();
@@ -5,15 +7,13 @@ export const actions = {
         const password = formData.get('password');
 
         try {
-            await locals.pb.collection('users').authWithPassword(email, password);
-
-            // Store authenticated user in locals
-            locals.user = locals.pb.authStore.model;
-            console.log('User:', locals.user);
-
-            return { success: true };
+            const authdata = await locals.pb.collection('users').authWithPassword(email, password);
         } catch (error) {
-            return { error: error.message };
+            console.log(error);
+            return { error: true, message: error.message };
         }
+
+        throw redirect(303, '/dashboard');
+
     }
 };
