@@ -12,6 +12,8 @@
         <button class="btn btn-primary" type="submit">Logout</button>
     </form>
 
+    <a href="/ranges/create" class="btn btn-primary">Create Range</a>
+
 {:else}
     <p>You are not logged in.</p>
     <a href="/login">Login</a>
