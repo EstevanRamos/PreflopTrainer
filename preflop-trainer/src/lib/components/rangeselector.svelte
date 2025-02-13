@@ -3,7 +3,20 @@ import RangeControls from './RangeControls.svelte';
 
 const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
 
-let {selectedHands = $bindable(), showControls = $bindable(true)} = $props();
+let {
+    selectedHands = $bindable({}),
+    showControls = $bindable(true),
+    selectable = $bindable(true),
+    controlsSelectable = $bindable(true)
+} = $props();
+
+// Initialize selectedHands if it's null
+$effect(() => {
+    if (selectedHands === null) {
+        selectedHands = {};
+    }
+});
+
 let selectedAction = $state('fold');
 let isDragging = $state(false);
 
@@ -13,12 +26,12 @@ function setAction(action) {
 
 function startSelection(hand) {
     isDragging = true;
-    selectedHands = { ...selectedHands, [hand]: selectedAction };
+    selectedHands = { ...(selectedHands || {}), [hand]: selectedAction };
 }
 
 function continueSelection(hand) {
     if (isDragging) {
-        selectedHands = { ...selectedHands, [hand]: selectedAction };
+        selectedHands = { ...(selectedHands || {}), [hand]: selectedAction };
     }
 }
 
@@ -27,7 +40,7 @@ function stopSelection() {
 }
 
 function clearRange() {
-    selectedHands = {}; // Reset all hands to 'fold'
+    selectedHands = {};
 }
 
 function selectLine(hand) {
@@ -68,28 +81,16 @@ function handleContextMenu(event, hand) {
     selectLine(hand);
 }
 
-async function saveRange() {
-    try {
-        const rangeData = {
-            name,
-            position,
-            stackSize,
-            range: selectedHands
-        };
-        console.log(rangeData.range)
-        //await pb.collection('ranges').create(rangeData);
-        alert('Range saved successfully!');
-    } catch (error) {
-        console.error('Error saving range:', error);
-        alert('Failed to save range.');
-    }
+function getHandAction(hand) {
+    return selectedHands[hand] || 'fold';
 }
+
 </script>
 
 
 <div class="container" role="grid" tabindex="0" 
-    onmouseup={stopSelection}
-    onmouseleave={stopSelection}>
+    onmouseup={selectable ? stopSelection : null}
+    onmouseleave={selectable ? stopSelection : null}>
     <!-- Hand Range Grid -->
     <div class="range-border">
         <div class="grid">
@@ -98,39 +99,39 @@ async function saveRange() {
                     {#if i === j}
                         <div
                             role="button"
-                            class="hand {selectedHands[row + row] || 'fold'}"
-                            onmousedown={() => startSelection(row + row)}
-                            onmouseover={() => continueSelection(row + row)}
-                            onfocus={() => continueSelection(row + row)}
-                            oncontextmenu={(e) => handleContextMenu(e, row + row)}
-                            onkeydown={e => e.key === 'Enter' && startSelection(row + row)}
-                            tabindex="0"
+                            class="hand {getHandAction(row + row)} {!selectable ? 'not-selectable' : ''}"
+                            onmousedown={selectable ? () => startSelection(row + row) : null}
+                            onmouseover={selectable ? () => continueSelection(row + row) : null}
+                            onfocus={selectable ? () => continueSelection(row + row) : null}
+                            oncontextmenu={(e) => selectable ? handleContextMenu(e, row + row) : e.preventDefault()}
+                            onkeydown={e => selectable && e.key === 'Enter' && startSelection(row + row)}
+                            tabindex={selectable ? "0" : "-1"}
                         >
                             {row}{row}
                         </div>
                     {:else if i < j}
                         <div
                             role="button"
-                            class="hand {selectedHands[row + col + 's'] || 'fold'}"
-                            onmousedown={() => startSelection(row + col + 's')}
-                            onmouseover={() => continueSelection(row + col + 's')}
-                            onfocus={() => continueSelection(row + col + 's')}
-                            oncontextmenu={(e) => handleContextMenu(e, row + col + 's')}
-                            onkeydown={e => e.key === 'Enter' && startSelection(row + col + 's')}
-                            tabindex="0"
+                            class="hand {getHandAction(row + col + 's')} {!selectable ? 'not-selectable' : ''}"
+                            onmousedown={selectable ? () => startSelection(row + col + 's') : null}
+                            onmouseover={selectable ? () => continueSelection(row + col + 's') : null}
+                            onfocus={selectable ? () => continueSelection(row + col + 's') : null}
+                            oncontextmenu={(e) => selectable ? handleContextMenu(e, row + col + 's') : e.preventDefault()}
+                            onkeydown={e => selectable && e.key === 'Enter' && startSelection(row + col + 's')}
+                            tabindex={selectable ? "0" : "-1"}
                         >
                             {row}{col}s
                         </div>
                     {:else}
                         <div
                             role="button"
-                            class="hand {selectedHands[col + row + 'o'] || 'fold'}"
-                            onmousedown={() => startSelection(col + row + 'o')}
-                            onmouseover={() => continueSelection(col + row + 'o')}
-                            onfocus={() => continueSelection(col + row + 'o')}
-                            oncontextmenu={(e) => handleContextMenu(e, col + row + 'o')}
-                            onkeydown={e => e.key === 'Enter' && startSelection(col + row + 'o')}
-                            tabindex="0"
+                            class="hand {getHandAction(col + row + 'o')} {!selectable ? 'not-selectable' : ''}"
+                            onmousedown={selectable ? () => startSelection(col + row + 'o') : null}
+                            onmouseover={selectable ? () => continueSelection(col + row + 'o') : null}
+                            onfocus={selectable ? () => continueSelection(col + row + 'o') : null}
+                            oncontextmenu={(e) => selectable ? handleContextMenu(e, col + row + 'o') : e.preventDefault()}
+                            onkeydown={e => selectable && e.key === 'Enter' && startSelection(col + row + 'o')}
+                            tabindex={selectable ? "0" : "-1"}
                         >
                             {col}{row}o
                         </div>
@@ -145,6 +146,7 @@ async function saveRange() {
             {selectedAction}
             onSetAction={setAction}
             onClearRange={clearRange}
+            {controlsSelectable}
         />
     {/if}
 </div>
@@ -152,36 +154,68 @@ async function saveRange() {
 <style>
     .container {
         display: flex;
-        gap: 2rem;
+        flex-wrap: wrap; /* Allow controls to wrap on smaller screens */
+        gap: 1rem;
         user-select: none;
+        width: 100%;
+        justify-content: center;
     }
 
     .range-border {
-        padding: 16px;
+        padding: clamp(0.5rem, 2vw, 1rem);
         border: 4px solid hsl(var(--p));
         border-radius: calc(var(--rounded-box) + 4px);
         background: hsl(var(--b2));
+        max-width: 100%;
+        overflow: auto; /* Allow scrolling if grid becomes too small */
     }
 
     .grid {
         display: grid;
-        grid-template-columns: repeat(13, 1fr);
-        gap: 4px;
+        grid-template-columns: repeat(13, minmax(30px, 1fr));
+        gap: clamp(2px, 0.5vw, 4px);
         border: none;
+        width: 100%;
     }
 
     .hand {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 40px;
-        height: 40px;
-        font-size: 14px;
+        aspect-ratio: 1; /* Keep squares square */
+        width: 100%;
+        min-width: 30px;
+        font-size: clamp(0.75rem, 1.5vw, 1rem);
         text-align: center;
         border: 1px solid hsl(var(--b3));
         border-radius: var(--rounded-btn);
         transition: background 0.2s ease, transform 0.1s ease;
         cursor: pointer;
+        padding: 0.25rem;
+    }
+
+    /* Media query for smaller screens */
+    @media (max-width: 640px) {
+        .grid {
+            grid-template-columns: repeat(13, minmax(25px, 1fr));
+        }
+
+        .hand {
+            min-width: 25px;
+            font-size: 0.7rem;
+        }
+    }
+
+    /* Media query for very small screens */
+    @media (max-width: 400px) {
+        .grid {
+            grid-template-columns: repeat(13, minmax(20px, 1fr));
+        }
+
+        .hand {
+            min-width: 20px;
+            font-size: 0.6rem;
+        }
     }
 
     .hand:hover {
@@ -203,11 +237,19 @@ async function saveRange() {
 
     .allin {
         background-color: var(--color-secondary);
-  
     }
 
     .selected {
         outline: 2px solid hsl(var(--wa));
         background: hsl(var(--wa) / 0.2);
+    }
+
+    .not-selectable {
+        cursor: default !important;
+    }
+
+    .not-selectable:hover {
+        transform: none;
+        filter: none;
     }
 </style>

@@ -1,20 +1,40 @@
 <script>
-    import Rangeselector from "$lib/components/rangeselector.svelte";
+    import Rangeselector from "$lib/components/RangeSelector.svelte";
     import RangeControls from "$lib/components/rangecontrols.svelte";
-    //import PocketBase from 'pocketbase';
-
-   // const pb = new PocketBase('http://127.0.0.1:8090');
+    import { invalidateAll, goto } from '$app/navigation';
+    import { applyAction, deserialize } from '$app/forms';
 
     let { name = '', position = '', stackSize = '' } = $state({});
     
     const positions = ['UTG', 'MP', 'CO', 'BTN', 'SB', 'BB'];
     const stackSizes = ['10BB', '20BB', '50BB'];
 
-    const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
-
     let selectedHands = $state({});
     let selectedAction = $state('fold');
     let isDragging = $state(false);
+
+    async function handleSubmit(event) {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        formData.append('name', name);
+        formData.append('position', position);
+        formData.append('stackSize', stackSize);
+        formData.append('range', JSON.stringify(selectedHands));
+
+
+        const response = await fetch(event.currentTarget.action, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = deserialize(await response.text());
+
+        if (result.type === 'success') {
+            await invalidateAll();
+        }
+
+        applyAction(result);
+    }
 
     function handleActionChange(event) {
         selectedAction = event.detail;
@@ -39,23 +59,6 @@
         selectedHands = {}; // Reset all hands to 'fold'
     }
 
-
-    async function saveRange() {
-        try {
-            const rangeData = {
-                name,
-                position,
-                stackSize,
-                range: selectedHands
-            };
-            console.log(rangeData.range)
-            //await pb.collection('ranges').create(rangeData);
-            alert('Range saved successfully!');
-        } catch (error) {
-            console.error('Error saving range:', error);
-            alert('Failed to save range.');
-        }
-    }
 </script>
 
 <div class="container mx-auto p-4">
@@ -103,20 +106,21 @@
             bind:selectedHands
             {selectedAction}
             {isDragging}
-            showControls={true}
             on:startSelection={startSelection}
             on:continueSelection={continueSelection}
             on:stopSelection={stopSelection}
         />
     </div>
-
-    <button 
-        on:click={saveRange} 
+<form method="POST" action="?/create" onsubmit={handleSubmit}>
+        <button 
         disabled={!name || !position || !stackSize}
         class="btn btn-primary"
+        type="submit"
     >
         Save Range
     </button>
+</form>
+
 </div>
 
 <style>
